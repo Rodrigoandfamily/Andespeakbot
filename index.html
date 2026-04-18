@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Andes Peak Adventures — AI Travel Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --ink:#0a1a0a;
+  --paper:#f0f7ee;
+  --cream:#e8f5e4;
+  --white:#fff;
+  --accent:#16a34a;
+  --accent-dark:#15803d;
+  --gold:#f59e0b;
+  --blue:#2563eb;
+  --muted:#4a7a4a;
+  --border-light:rgba(0,0,0,0.08);
+  --shadow:0 4px 24px rgba(0,0,0,0.1);
+  --shadow-lg:0 12px 48px rgba(0,0,0,0.18);
+  --text-xs:clamp(0.68rem,2vw,0.76rem);
+  --text-sm:clamp(0.78rem,2.5vw,0.86rem);
+  --text-md:clamp(0.85rem,2.5vw,0.93rem);
+  --text-lg:clamp(0.92rem,3vw,1.02rem);
+}
+
+html{height:100%}
+body{
+  min-height:100%;height:100dvh;
+  font-family:'DM Sans',sans-serif;
+  -webkit-font-smoothing:antialiased;
+  background:var(--paper);color:var(--ink);
+  display:flex;align-items:center;justify-content:center;
+}
+@media(min-width:600px){body{background:#111e11}}
+
+/* ── APP ── */
+.app{
+  display:flex;flex-direction:column;
+  width:100%;max-width:560px;height:100dvh;
+  background:var(--paper);position:relative;overflow:hidden;
+}
+@media(min-width:600px){
+  .app{height:min(800px,94dvh);border-radius:24px;box-shadow:var(--shadow-lg)}
+}
+.app::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse at 15% 10%,rgba(22,163,74,.07) 0%,transparent 50%),
+    radial-gradient(ellipse at 85% 90%,rgba(245,158,11,.05) 0%,transparent 50%);
+  pointer-events:none;z-index:0;
+}
+
+/* ── HEADER ── */
+.header{
+  background:linear-gradient(160deg,#071a07,#0c1f0c);
+  color:#fff;
+  padding:clamp(12px,3vw,18px) clamp(14px,4vw,22px);
+  display:flex;align-items:center;gap:clamp(10px,2.5vw,14px);
+  flex-shrink:0;position:relative;z-index:10;
+  border-bottom:1px solid rgba(22,163,74,.18);
+}
+.header::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,rgba(22,163,74,.5),rgba(245,158,11,.3),transparent);
+}
+.avatar{
+  width:clamp(40px,9vw,48px);height:clamp(40px,9vw,48px);
+  background:linear-gradient(135deg,var(--accent),var(--gold));
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:clamp(16px,4vw,22px);flex-shrink:0;position:relative;
+  box-shadow:0 0 0 3px rgba(22,163,74,.2);
+}
+.online-dot{
+  position:absolute;bottom:1px;right:1px;
+  width:10px;height:10px;background:#22c55e;
+  border-radius:50%;border:2px solid #071a07;
+  animation:pulse 2s infinite;
+}
+.header-info{flex:1;min-width:0}
+.header-name{
+  font-family:'Syne',sans-serif;font-weight:800;
+  font-size:var(--text-lg);white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;letter-spacing:-.01em;
+}
+.header-status{
+  font-size:var(--text-xs);color:rgba(255,255,255,.4);
+  margin-top:2px;display:flex;align-items:center;gap:5px;
+}
+.status-dot{width:5px;height:5px;background:#22c55e;border-radius:50%}
+.header-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.plan-badge{
+  font-size:.58rem;font-family:'Syne',sans-serif;font-weight:700;
+  padding:3px 8px;border-radius:100px;white-space:nowrap;letter-spacing:.04em;
+  background:rgba(245,158,11,.2);color:#fcd34d;border:1px solid rgba(245,158,11,.3);
+}
+.lang-toggle{display:flex;gap:2px;background:rgba(255,255,255,.08);border-radius:8px;padding:3px}
+.lang-btn{
+  background:none;border:none;color:rgba(255,255,255,.35);
+  font-size:var(--text-xs);font-family:'Syne',sans-serif;font-weight:700;
+  padding:4px 7px;border-radius:6px;cursor:pointer;transition:all .2s;
+  -webkit-tap-highlight-color:transparent;letter-spacing:.04em;
+}
+.lang-btn.active{background:rgba(255,255,255,.18);color:#fff}
+
+/* ── HOURS BANNER ── */
+.hours-banner{
+  display:flex;align-items:center;gap:8px;
+  padding:clamp(7px,2vw,9px) clamp(14px,4vw,22px);
+  font-size:var(--text-xs);font-weight:500;
+  flex-shrink:0;position:relative;z-index:9;
+}
+.hours-banner.open{background:#f0fdf4;color:#15803d;border-bottom:1px solid #d1fae5}
+.hours-banner.closed{background:#fff7ed;color:#c2410c;border-bottom:1px solid #fed7aa}
+.hours-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.open .hours-dot{background:#22c55e}
+.closed .hours-dot{background:#f97316}
+
+/* ── MESSAGES ── */
+.messages{
+  flex:1;overflow-y:auto;
+  padding:clamp(12px,3vw,18px);
+  display:flex;flex-direction:column;
+  gap:clamp(10px,2.5vw,13px);
+  scroll-behavior:smooth;
+  overscroll-behavior:contain;
+  -webkit-overflow-scrolling:touch;
+  position:relative;z-index:1;
+}
+.messages::-webkit-scrollbar{width:3px}
+.messages::-webkit-scrollbar-thumb{background:rgba(0,0,0,.1);border-radius:3px}
+
+.msg{
+  display:flex;gap:8px;align-items:flex-end;
+  animation:msgIn .3s cubic-bezier(.2,0,.3,1) both;
+  max-width:min(88%,400px);
+}
+.msg.user{align-self:flex-end;flex-direction:row-reverse}
+.msg.ai{align-self:flex-start}
+.msg-avatar{
+  width:clamp(26px,5.5vw,30px);height:clamp(26px,5.5vw,30px);
+  border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--gold));
+  display:flex;align-items:center;justify-content:center;
+  font-size:clamp(11px,2.5vw,13px);flex-shrink:0;
+}
+.msg.user .msg-avatar{background:var(--ink)}
+.msg-body{display:flex;flex-direction:column;gap:6px;min-width:0}
+.bubble{
+  padding:clamp(10px,2.5vw,13px) clamp(12px,3vw,15px);
+  border-radius:18px;font-size:var(--text-md);
+  line-height:1.6;word-break:break-word;
+}
+.msg.ai .bubble{background:var(--white);color:var(--ink);border-bottom-left-radius:4px;box-shadow:var(--shadow)}
+.msg.user .bubble{background:var(--ink);color:#fff;border-bottom-right-radius:4px}
+
+/* ── ACTION BUTTONS ── */
+.action-btns{display:flex;flex-wrap:wrap;gap:6px;padding-left:4px}
+.action-btn{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:clamp(7px,2vw,9px) clamp(11px,3vw,15px);
+  border-radius:100px;font-family:'DM Sans',sans-serif;
+  font-size:var(--text-xs);font-weight:600;
+  cursor:pointer;border:none;text-decoration:none;
+  white-space:nowrap;-webkit-tap-highlight-color:transparent;
+  transition:transform .15s,opacity .15s;
+}
+.action-btn:active{transform:scale(.93);opacity:.85}
+.btn-wa{background:#25d366;color:#fff}
+.btn-cal{background:var(--blue);color:#fff}
+.btn-rev{background:var(--gold);color:#fff}
+.btn-call{background:var(--ink);color:#fff}
+
+/* ── LEAD FORM ── */
+.lead-form{
+  background:var(--white);border-radius:14px;
+  padding:clamp(13px,3.5vw,18px);
+  box-shadow:var(--shadow);border:1px solid rgba(22,163,74,.15);margin-top:4px;
+}
+.lead-form-title{
+  font-family:'Syne',sans-serif;font-weight:700;
+  font-size:var(--text-sm);color:var(--ink);
+  margin-bottom:11px;display:flex;align-items:center;gap:7px;line-height:1.3;
+}
+.lead-input{
+  width:100%;font-family:'DM Sans',sans-serif;font-size:var(--text-sm);
+  background:var(--cream);border:1.5px solid transparent;
+  border-radius:9px;padding:clamp(8px,2vw,10px) clamp(10px,3vw,13px);
+  color:var(--ink);outline:none;margin-bottom:7px;-webkit-appearance:none;transition:all .2s;
+}
+.lead-input:focus{border-color:var(--accent);background:#fff}
+.lead-submit{
+  width:100%;background:linear-gradient(135deg,var(--accent),var(--accent-dark));
+  color:#fff;border:none;border-radius:10px;
+  padding:clamp(10px,2.5vw,12px);
+  font-family:'Syne',sans-serif;font-weight:700;font-size:var(--text-sm);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:opacity .15s,transform .15s;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.lead-submit:active{opacity:.85;transform:scale(.98)}
+.tg-notice{
+  display:flex;align-items:center;gap:6px;
+  font-size:var(--text-xs);color:var(--muted);
+  margin-top:8px;padding:6px 10px;
+  background:rgba(42,171,238,.06);
+  border-radius:8px;border:1px solid rgba(42,171,238,.14);
+}
+
+/* ── TYPING ── */
+.typing{
+  display:none;align-self:flex-start;
+  background:var(--white);padding:12px 16px;
+  border-radius:18px;border-bottom-left-radius:4px;box-shadow:var(--shadow);
+}
+.typing.show{display:flex;gap:5px;align-items:center}
+.typing span{
+  width:6px;height:6px;background:var(--muted);border-radius:50%;
+  animation:bounce 1.2s infinite;
+}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+
+/* ── QUICK REPLIES ── */
+.quick-replies{
+  padding:0 clamp(12px,3vw,18px) clamp(8px,2vw,11px);
+  display:flex;flex-wrap:wrap;gap:6px;
+  flex-shrink:0;position:relative;z-index:5;
+}
+.qr-btn{
+  background:var(--white);border:1.5px solid var(--border-light);
+  border-radius:100px;padding:clamp(6px,2vw,8px) clamp(10px,3vw,13px);
+  font-family:'DM Sans',sans-serif;font-size:var(--text-xs);font-weight:500;
+  cursor:pointer;color:var(--ink);white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;
+  box-shadow:0 2px 6px rgba(0,0,0,.05);transition:all .15s;
+}
+.qr-btn:active{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* ── INPUT AREA ── */
+.input-area{
+  padding:clamp(10px,2.5vw,13px) clamp(12px,3.5vw,18px) clamp(14px,5vw,22px);
+  background:var(--paper);border-top:1px solid var(--border-light);
+  display:flex;gap:8px;align-items:flex-end;
+  flex-shrink:0;position:relative;z-index:5;
+}
+.chat-input{
+  flex:1;background:var(--white);
+  border:1.5px solid var(--border-light);border-radius:16px;
+  padding:clamp(10px,2.5vw,13px) clamp(12px,3vw,15px);
+  font-family:'DM Sans',sans-serif;font-size:var(--text-md);
+  color:var(--ink);outline:none;resize:none;
+  min-height:clamp(44px,10vw,50px);max-height:110px;
+  line-height:1.5;-webkit-appearance:none;transition:border-color .2s,box-shadow .2s;
+}
+.chat-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(22,163,74,.08)}
+.send-btn{
+  background:linear-gradient(135deg,var(--accent),var(--gold));
+  border:none;border-radius:13px;
+  width:clamp(44px,10vw,50px);height:clamp(44px,10vw,50px);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;color:#fff;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .15s,opacity .15s;
+  box-shadow:0 4px 12px rgba(22,163,74,.3);
+}
+.send-btn:active{transform:scale(.9);opacity:.85}
+.send-btn:disabled{opacity:.3;cursor:not-allowed;transform:none}
+
+/* ── ERROR BANNER ── */
+.error-banner{
+  background:#fef2f2;border-bottom:1px solid #fecaca;
+  color:#dc2626;padding:10px 18px;
+  font-size:var(--text-xs);display:none;
+  align-items:center;gap:8px;flex-shrink:0;z-index:8;
+}
+.error-banner.show{display:flex}
+
+/* ── ANIMATIONS ── */
+@keyframes msgIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.85)}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="avatar">🏔️<div class="online-dot"></div></div>
+    <div class="header-info">
+      <div class="header-name">Andes Peak Adventures</div>
+      <div class="header-status"><span class="status-dot"></span>AI Travel Assistant · 24/7</div>
+    </div>
+    <div class="header-right">
+      <span class="plan-badge">👑 Dream</span>
+      <div class="lang-toggle">
+        <button class="lang-btn active" id="btnEN" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" id="btnES" onclick="setLang('es')">ES</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOURS BANNER -->
+  <div class="hours-banner open" id="hoursBanner">
+    <span class="hours-dot"></span>
+    <span id="hoursText">Open · Mon–Sat 8:00 AM–6:00 PM</span>
+  </div>
+
+  <!-- ERROR BANNER -->
+  <div class="error-banner" id="errorBanner">
+    ⚠️ <span id="errorText">Connection issue — please try again</span>
+  </div>
+
+  <!-- MESSAGES -->
+  <div class="messages" id="messages">
+    <div class="typing" id="typing"><span></span><span></span><span></span></div>
+  </div>
+
+  <!-- QUICK REPLIES -->
+  <div class="quick-replies" id="quickReplies"></div>
+
+  <!-- INPUT AREA -->
+  <div class="input-area">
+    <textarea class="chat-input" id="chatInput" rows="1"
+      placeholder="Ask about our tours..."
+      onkeydown="handleKey(event)"
+      oninput="autoResize(this)"></textarea>
+    <button class="send-btn" id="sendBtn" onclick="sendMessage()">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"/>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+      </svg>
+    </button>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// CONFIGURATION
+// API key is stored as a Netlify environment variable
+// The frontend calls /.netlify/functions/claude-proxy
+// NOT the Anthropic API directly — no CORS issues!
+// ══════════════════════════════════════════
+const PROXY_URL = '/.netlify/functions/claude-proxy';
+
+// Optional: Telegram for lead notifications
+// Set these in your Netlify environment variables too
+// Or leave blank to use WhatsApp fallback only
+const TG_TOKEN = ''; // Set via Netlify env var or leave blank
+const TG_CHAT  = ''; // Set via Netlify env var or leave blank
+
+// ══════════════════════════════════════════
+// BUSINESS DATA
+// ══════════════════════════════════════════
+const BD = {
+  name:"Andes Peak Adventures",
+  owner:"Diego",
+  city:"Santiago, Chile",
+  phone:"+56 9 1234 5678",
+  whatsapp:"56912345678",
+  email:"info@andespeak.cl",
+  calendly:"https://calendly.com/andespeak",
+  reviewLink:"https://g.page/andespeak/review",
+  openDays:"Monday to Saturday",
+  openTime:"08:00",
+  closeTime:"18:00",
+  pickup:"Hotel pickup in Santiago Centro, Providencia, Las Condes, Vitacura. Meeting point: Plaza Italia 7:00 AM. Free pickup within 5km of Santiago Centro.",
+  cancel:"Free cancellation 48h+ before. Within 48h = 50% refund. Within 24h = no refund. Trail closed or dangerous weather = free reschedule.",
+  bring:"Hiking boots (no sandals), sunscreen SPF50+, sunglasses, hat, 2L water, snacks, warm layer, camera, ID. Trekking poles available.",
+  tours:`
+TOUR 1: Cajón del Maipo Full Day Trek
+Difficulty: Moderate | Duration: 9 hours | Distance: 14km / 600m gain
+Price: $45,000 CLP / $45 USD adult — $25,000 CLP / $25 USD child
+Group: 2-12 people | Min age: 8 years | Departs: Plaza Italia 7:00 AM
+Included: Transport, bilingual guide, lunch, 2 water bottles, entrance fees, trekking poles
+NOT included: Insurance, tips ($5k CLP suggested), alcohol, personal snacks
+Gear: Hiking boots required. Sunscreen, hat, warm layer. Swimwear optional.
+Season: Year round. Best Oct–Apr. Jun–Aug may have snow.
+Physical: Moderate fitness. 14km uneven terrain. Not for knee/heart conditions.
+Highlights: El Morado glacier viewpoint, condor sightings at km 9, optional hot springs.
+
+TOUR 2: Valle Nevado Half Day Snow Experience
+Difficulty: Easy | Duration: 5 hours | Distance: 4km / 200m gain
+Price: $35,000 CLP / $35 USD adult — $20,000 CLP / $20 USD child
+Group: 2-15 people | Min age: 4 years | Departs: Plaza Italia 8:00 AM
+Included: Transport, guide, hot chocolate at summit, entrance, snow boots if needed
+NOT included: Ski equipment, lessons, insurance, lunch
+Gear: Warm waterproof jacket, gloves, beanie, sunglasses, waterproof boots
+Season: June–September ONLY. Best July–August for guaranteed snow.
+Physical: Very easy. All ages including elderly and toddlers.
+Highlights: First snow experience! 360° Andes view. Sledding available.
+
+TOUR 3: Cerro San Cristóbal Sunrise Trek
+Difficulty: Easy | Duration: 3 hours | Distance: 6km / 300m gain
+Price: $18,000 CLP / $18 USD adult — $10,000 CLP / $10 USD child
+Group: 1-20 people | Min age: None | Departs: Barrio Bellavista 5:30 AM
+Included: Guide, sunrise breakfast at summit, water, entrance
+NOT included: Transport to meeting point, tips, snacks
+Gear: Comfortable shoes, light jacket for morning cold, camera
+Season: Year round. Best visibility Oct–Apr.
+Physical: Very easy. No experience needed. Suitable for everyone.
+Highlights: Best panoramic view of Santiago and Andes. Famous Instagram spot.`
+};
+
+// ══════════════════════════════════════════
+// DAYS TRANSLATION
+// ══════════════════════════════════════════
+const DAYS = {
+  "Monday to Friday":    {en:"Monday to Friday",    es:"Lunes a Viernes"},
+  "Monday to Saturday":  {en:"Monday to Saturday",  es:"Lunes a Sábado"},
+  "Monday to Sunday":    {en:"Monday to Sunday",    es:"Lunes a Domingo"},
+  "Tuesday to Saturday": {en:"Tuesday to Saturday", es:"Martes a Sábado"},
+  "Tuesday to Sunday":   {en:"Tuesday to Sunday",   es:"Martes a Domingo"},
+};
+function translateDays(d, l){ return DAYS[d]?.[l] || d }
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let lang = 'en';
+let cname = '';
+let history = [];
+let isLoading = false;
+let leadFormShown = false;
+
+const QR = {
+  en:['What tours do you offer?','Good for kids?','What should I bring?','How to book?'],
+  es:['¿Qué tours ofrecen?','¿Apto para niños?','¿Qué debo llevar?','¿Cómo reservo?']
+};
+
+// ══════════════════════════════════════════
+// HOURS
+// ══════════════════════════════════════════
+function isOpen(){
+  const n=new Date();
+  const [oh,om]=BD.openTime.split(':').map(Number);
+  const [ch,cm]=BD.closeTime.split(':').map(Number);
+  const m=n.getHours()*60+n.getMinutes();
+  return m>=oh*60+om && m<ch*60+cm;
+}
+function ft(t){
+  const [h,m]=t.split(':').map(Number);
+  const ap=h>=12?'PM':'AM',hr=h>12?h-12:h===0?12:h;
+  return `${hr}:${String(m).padStart(2,'0')} ${ap}`;
+}
+function updateHours(){
+  const open=isOpen();
+  const banner=document.getElementById('hoursBanner');
+  const text=document.getElementById('hoursText');
+  banner.className=`hours-banner ${open?'open':'closed'}`;
+  const days=translateDays(BD.openDays,lang);
+  const o=ft(BD.openTime),c=ft(BD.closeTime);
+  text.textContent=open
+    ?(lang==='en'?`Open · ${days} ${o}–${c}`:`Abierto · ${days} ${o}–${c}`)
+    :(lang==='en'?`Closed · Opens ${o} (${days})`:`Cerrado · Abre ${o} (${days})`);
+}
+
+// ══════════════════════════════════════════
+// LANGUAGE
+// ══════════════════════════════════════════
+function setLang(l){
+  lang=l;
+  document.getElementById('btnEN').className=`lang-btn${l==='en'?' active':''}`;
+  document.getElementById('btnES').className=`lang-btn${l==='es'?' active':''}`;
+  updateHours();
+  renderQR();
+  const inp=document.getElementById('chatInput');
+  if(inp) inp.placeholder=l==='en'?'Ask about our tours...':'Pregunta sobre nuestros tours...';
+}
+function renderQR(){
+  document.getElementById('quickReplies').innerHTML=
+    QR[lang].map(q=>`<button class="qr-btn" onclick="sendQuick('${q}')">${q}</button>`).join('');
+}
+
+// ══════════════════════════════════════════
+// SYSTEM PROMPT
+// ══════════════════════════════════════════
+function buildPrompt(){
+  const open=isOpen();
+  const days=translateDays(BD.openDays,'en');
+  const nc=cname
+    ?`Customer name is ${cname}. Use warmly every 2-3 messages.`
+    :`Haven't asked name yet. Ask early and naturally.`;
+  const hc=open
+    ?`Office OPEN (${days}, ${ft(BD.openTime)}–${ft(BD.closeTime)}).`
+    :`Office CLOSED. Hours: ${days} ${ft(BD.openTime)}–${ft(BD.closeTime)}. Warmly acknowledge, offer to take contact info for ${BD.owner} to follow up.`;
+
+  return `You are "Alex", expert AI travel assistant for "${BD.name}" in ${BD.city}.
+Owner: ${BD.owner} | Phone: ${BD.phone} | Email: ${BD.email}
+Hours: ${hc}
+Customer: ${nc}
+Pickup: ${BD.pickup}
+Cancellation: ${BD.cancel}
+General gear: ${BD.bring}
+
+TOURS:
+${BD.tours}
+
+LANGUAGE: ${lang==='en'?'Respond in English. Auto-switch if customer writes in Spanish.':'Responde en Español. Cambia automáticamente si el cliente escribe en inglés.'}
+
+RULES:
+1. Use customer name warmly every 2-3 messages
+2. Tour questions → give SPECIFIC details from above ONLY. Never invent.
+3. Always qualify: Which tour? Travel dates? Group size? Ages?
+4. Booking → mention Calendly link available
+5. Unknown info → offer to connect with ${BD.owner} via WhatsApp
+6. Angry/frustrated → immediate empathy, connect personally
+7. After hours → take contact info warmly
+8. After tour / thank you → gently suggest Google review
+9. Replies: warm, exciting, 2-4 sentences, end with question or action
+10. Foreign tourists → extra welcoming — they came far to visit Chile! 🇨🇱
+11. NEVER make up prices, distances, policies or tour details not listed`;
+}
+
+// ══════════════════════════════════════════
+// CORRECTED callClaude — calls Netlify proxy
+// NOT the Anthropic API directly (no CORS!)
+// ══════════════════════════════════════════
+async function callClaude(msg){
+  const messages=[...history,{role:'user',content:msg}];
+
+  try {
+    // Call OUR Netlify function — not Anthropic directly
+    const res=await fetch(PROXY_URL,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      // No API key here! It's stored in Netlify env vars
+      body:JSON.stringify({
+        messages,
+        system:buildPrompt()
+      })
+    });
+
+    if(!res.ok){
+      const err=await res.text();
+      throw new Error(`Proxy error ${res.status}: ${err}`);
+    }
+
+    const data=await res.json();
+
+    if(data.error){
+      throw new Error(data.error);
+    }
+
+    const reply=data.content?.[0]?.text||(lang==='en'
+      ?`Sorry! Contact ${BD.owner} at ${BD.phone}`
+      :`Disculpa! Contacta a ${BD.owner} al ${BD.phone}`);
+
+    history.push({role:'user',content:msg},{role:'assistant',content:reply});
+    if(history.length>24) history=history.slice(-24);
+
+    // Extract customer name
+    if(!cname){
+      const m=msg.match(/(?:my name is|i'm|i am|soy|me llamo|llámame)\s+([A-Za-záéíóúñÁÉÍÓÚÑ]+)/i)
+        ||(msg.trim().split(' ').length===1&&msg.trim().length>=2&&msg.trim().length<=16?[null,msg.trim()]:null);
+      if(m) cname=m[1].charAt(0).toUpperCase()+m[1].slice(1);
+    }
+
+    hideError();
+    return reply;
+
+  } catch(e){
+    console.error('Claude proxy error:',e);
+    showError(lang==='en'
+      ?`Connection issue. Try again or call ${BD.phone}`
+      :`Error de conexión. Intenta de nuevo o llama al ${BD.phone}`);
+    return null;
+  }
+}
+
+// ══════════════════════════════════════════
+// ERROR HANDLING
+// ══════════════════════════════════════════
+function showError(msg){
+  const b=document.getElementById('errorBanner');
+  document.getElementById('errorText').textContent=msg;
+  b.className='error-banner show';
+  setTimeout(()=>b.className='error-banner',5000);
+}
+function hideError(){
+  document.getElementById('errorBanner').className='error-banner';
+}
+
+// ══════════════════════════════════════════
+// TELEGRAM NOTIFICATION
+// ══════════════════════════════════════════
+async function sendTelegram(lead){
+  if(!TG_TOKEN||!TG_CHAT) return false;
+  const text=`🏔️ NEW TOUR INQUIRY — ${BD.name}\n\n👤 Name: ${lead.name}\n📞 Phone: ${lead.phone}\n🗺️ Tour: ${lead.tour||'Not specified'}\n📅 Dates: ${lead.dates||'Not specified'}\n👥 Group: ${lead.group||'Not specified'}\n🕐 Time: ${new Date().toLocaleTimeString()}\n📍 Source: AI Chat`;
+  try{
+    const r=await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({chat_id:TG_CHAT,text})
+    });
+    const d=await r.json();
+    return d.ok===true;
+  }catch(e){return false}
+}
+
+// ══════════════════════════════════════════
+// ACTION BUTTONS
+// ══════════════════════════════════════════
+function getActions(text){
+  const t=text.toLowerCase();
+  const btns=[];
+  const nw=t.includes('connect')||t.includes('whatsapp')||t.includes('sorry')||t.includes('personally')||t.includes('disculpa')||t.includes('directly')||t.includes('confirm')||t.includes('personalmente');
+  const nb=t.includes('book')||t.includes('reserv')||t.includes('agenda')||t.includes('availab')||t.includes('disponib')||t.includes('schedule')||t.includes('cita');
+  const nr=t.includes('review')||t.includes('reseña')||t.includes('google')||t.includes('feedback');
+  const nc=t.includes('call')||t.includes('llamar')||t.includes('phone')||t.includes('teléfono');
+  const nf=!leadFormShown&&(t.includes('leave your')||t.includes('take your')||t.includes('deja tus')||t.includes('tus datos')||t.includes('your details')||t.includes('your information')||t.includes('contact info')||(!isOpen()&&(t.includes('quote')||t.includes('cotización')||t.includes('follow up'))));
+
+  if(BD.whatsapp&&nw){
+    const m=encodeURIComponent((lang==='en'?`Hi ${BD.owner}! I was chatting with your AI travel assistant.`:`¡Hola ${BD.owner}! Estaba con tu asistente IA.`)+(cname?` — ${cname}`:''));
+    btns.push(`<a class="action-btn btn-wa" href="https://wa.me/${BD.whatsapp}?text=${m}" target="_blank">💬 WhatsApp ${BD.owner}</a>`);
+  }
+  if(BD.calendly&&nb) btns.push(`<a class="action-btn btn-cal" href="${BD.calendly}" target="_blank">📅 ${lang==='en'?'Book Tour':'Reservar Tour'}</a>`);
+  if(BD.reviewLink&&nr) btns.push(`<a class="action-btn btn-rev" href="${BD.reviewLink}" target="_blank">⭐ ${lang==='en'?'Leave Review':'Dejar Reseña'}</a>`);
+  if(BD.phone&&(nc||nw)) btns.push(`<a class="action-btn btn-call" href="tel:${BD.phone}">📞 ${lang==='en'?'Call Now':'Llamar'}</a>`);
+
+  return{btns,showForm:nf};
+}
+
+// ══════════════════════════════════════════
+// LEAD FORM
+// ══════════════════════════════════════════
+function buildLeadForm(){
+  leadFormShown=true;
+  const hasTG=TG_TOKEN&&TG_CHAT;
+  return`<div class="lead-form">
+    <div class="lead-form-title">🏔️ ${lang==='en'?`Get a personalized quote — ${BD.owner} will contact you`:`Cotización personalizada — ${BD.owner} te contactará`}</div>
+    <input class="lead-input" id="lf-name"  placeholder="${lang==='en'?'Your name':'Tu nombre'}" />
+    <input class="lead-input" id="lf-phone" placeholder="${lang==='en'?'WhatsApp / Phone':'WhatsApp / Teléfono'}" />
+    <input class="lead-input" id="lf-tour"  placeholder="${lang==='en'?'Which tour interests you?':'¿Qué tour te interesa?'}" />
+    <input class="lead-input" id="lf-dates" placeholder="${lang==='en'?'Travel dates (approx)':'Fechas de viaje (aprox)'}" />
+    <input class="lead-input" id="lf-group" placeholder="${lang==='en'?'Group size + ages':'Grupo + edades'}" style="margin-bottom:12px"/>
+    <button class="lead-submit" onclick="submitLead()">${lang==='en'?'Send Inquiry':'Enviar Consulta'} →</button>
+    <div class="tg-notice">${hasTG
+      ?`✈️ ${lang==='en'?`${BD.owner} notified instantly via Telegram`:`${BD.owner} notificado al instante por Telegram`}`
+      :`💬 ${lang==='en'?`Inquiry sent to ${BD.owner} via WhatsApp`:`Consulta enviada a ${BD.owner} por WhatsApp`}`}
+    </div>
+  </div>`;
+}
+
+async function submitLead(){
+  const name =document.getElementById('lf-name')?.value.trim();
+  const phone=document.getElementById('lf-phone')?.value.trim();
+  const tour =document.getElementById('lf-tour')?.value.trim();
+  const dates=document.getElementById('lf-dates')?.value.trim();
+  const group=document.getElementById('lf-group')?.value.trim();
+  if(!name||!phone){alert(lang==='en'?'Please enter name and phone':'Por favor ingresa nombre y teléfono');return}
+
+  const lead={name,phone,tour,dates,group};
+  document.getElementById('quickReplies').innerHTML='';
+
+  // Try Telegram first
+  const tgSent=await sendTelegram(lead);
+
+  // WhatsApp fallback only if Telegram failed
+  if(!tgSent&&BD.whatsapp){
+    const m=encodeURIComponent(`🏔️ ${lang==='en'?'NEW TOUR INQUIRY':'NUEVA CONSULTA'}!\nName: ${name}\nPhone: ${phone}`+(tour?`\nTour: ${tour}`:'')+(dates?`\nDates: ${dates}`:'')+(group?`\nGroup: ${group}`:''));
+    window.open(`https://wa.me/${BD.whatsapp}?text=${m}`,'_blank');
+  }
+
+  if(!cname) cname=name;
+  addMessage('ai',lang==='en'
+    ?`Perfect ${name}! 🎉 Your inquiry has been sent to ${BD.owner}. You'll receive a personalized quote soon. Anything else you'd like to know? 🏔️`
+    :`¡Perfecto ${name}! 🎉 Tu consulta fue enviada a ${BD.owner}. Recibirás una cotización pronto. ¿Algo más que quieras saber? 🏔️`,false);
+}
+
+// ══════════════════════════════════════════
+// MESSAGES
+// ══════════════════════════════════════════
+function addMessage(role,text,showActions=false){
+  const el=document.getElementById('messages');
+  const typ=document.getElementById('typing');
+  const div=document.createElement('div');
+  div.className=`msg ${role}`;
+  let extras='';
+  if(role==='ai'&&showActions){
+    const{btns,showForm}=getActions(text);
+    if(btns.length) extras+=`<div class="action-btns">${btns.join('')}</div>`;
+    if(showForm) extras+=buildLeadForm();
+  }
+  div.innerHTML=`<div class="msg-avatar">${role==='ai'?'🏔️':'👤'}</div><div class="msg-body"><div class="bubble">${text.replace(/\n/g,'<br>')}</div>${extras}</div>`;
+  el.insertBefore(div,typ);
+  el.scrollTop=el.scrollHeight;
+}
+
+function showTyping(show){
+  document.getElementById('typing').className=`typing${show?' show':''}`;
+  document.getElementById('messages').scrollTop=99999;
+}
+
+// ══════════════════════════════════════════
+// GREET
+// ══════════════════════════════════════════
+async function greet(){
+  showTyping(true);
+  const open=isOpen();
+  const days=translateDays(BD.openDays,'en');
+  const p=open
+    ?`Warmly welcome traveler to ${BD.name}. Help them find perfect Andes adventure. Ask their name. Enthusiastic! Max 2 sentences.`
+    :`Warmly greet but say office is closed (${days} ${ft(BD.openTime)}–${ft(BD.closeTime)}). Ask them to leave details — ${BD.owner} will send personalized tour quote. Exciting not disappointing! Short.`;
+  const reply=await callClaude(p);
+  showTyping(false);
+  if(reply) addMessage('ai',reply,!open);
+  else addMessage('ai',lang==='en'?`Welcome to ${BD.name}! 🏔️ I'm Alex, your AI travel assistant. What's your name?`:`¡Bienvenido a ${BD.name}! 🏔️ Soy Alex. ¿Cómo te llamas?`,false);
+}
+
+// ══════════════════════════════════════════
+// SEND
+// ══════════════════════════════════════════
+async function sendMessage(){
+  const inp=document.getElementById('chatInput');
+  const text=inp.value.trim();
+  if(!text||isLoading) return;
+  inp.value='';autoResize(inp);
+  addMessage('user',text);
+  document.getElementById('quickReplies').innerHTML='';
+  isLoading=true;
+  document.getElementById('sendBtn').disabled=true;
+  showTyping(true);
+  const reply=await callClaude(text);
+  showTyping(false);
+  if(reply) addMessage('ai',reply,true);
+  isLoading=false;
+  document.getElementById('sendBtn').disabled=false;
+  inp.focus();
+}
+
+function sendQuick(t){document.getElementById('chatInput').value=t;sendMessage()}
+function handleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage()}}
+function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,110)+'px'}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+updateHours();
+renderQR();
+setTimeout(greet,600);
+</script>
+</body>
+</html>
